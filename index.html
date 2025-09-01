@@ -50,6 +50,32 @@
             font-size: 14px;
         }
 
+        /* History metrics and charts styling */
+        .history-metrics {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-metrics .metric {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .history-charts {
+            margin-bottom: 20px;
+        }
+
+        .history-charts canvas {
+            width: 100% !important;
+            max-width: 640px;
+            height: 260px !important;
+            margin-bottom: 20px;
+        }
+
         .history-icon {
             position: absolute;
             top: 20px;
@@ -648,11 +674,20 @@
                 <h2>📅 Histórico de Treinos</h2>
                 <button class="close-history" onclick="closeHistory()">Fechar</button>
             </div>
+            <!-- Metrics and charts for history -->
+            <div class="history-metrics" id="historyMetrics"></div>
+            <div class="history-charts" id="historyCharts">
+                <canvas id="lineChart"></canvas>
+                <canvas id="barChart"></canvas>
+            </div>
+
             <div class="history-list" id="historyListModal"></div>
             <button class="clear-history" onclick="clearHistory()">🗑️ Limpar Histórico</button>
         </div>
     </div>
 
+    <!-- Chart.js library for creating graphs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
     <script>
         let session = {
             date: '',
@@ -668,6 +703,10 @@
 
         // Set today's date by default
         document.getElementById('sessionDate').valueAsDate = new Date();
+
+        // Chart instances for reuse across history modal openings
+        let lineChart;
+        let barChart;
 
         function startSession() {
             const date = document.getElementById('sessionDate').value;
@@ -995,11 +1034,177 @@
             const sessions = JSON.parse(localStorage.getItem('golfSessions') || '[]');
             const modal = document.getElementById('historyModal');
             const list = document.getElementById('historyListModal');
+            const metricsDiv = document.getElementById('historyMetrics');
+
+            // Reset metrics content
+            metricsDiv.innerHTML = '';
+
+            // Destroy existing charts if they exist
+            if (lineChart) {
+                lineChart.destroy();
+                lineChart = null;
+            }
+            if (barChart) {
+                barChart.destroy();
+                barChart = null;
+            }
 
             if (sessions.length === 0) {
                 list.innerHTML = '<p style="text-align: center; color: #6c757d;">Nenhum treino registrado ainda.</p>';
             } else {
-                list.innerHTML = sessions.reverse().map(session => {
+                // Compute metrics and prepare data for charts
+                // Sort sessions by timestamp ascending to compute evolution correctly
+                const sessionsSorted = sessions.slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const labels = [];
+                const greenPercents = [];
+                const clubStats = {};
+                let totalGreenShots = 0;
+                let totalShotsAll = 0;
+                let totalPuttsMadeAll = 0;
+                let totalPuttsAll = 0;
+
+                sessionsSorted.forEach(session => {
+                    const totalShots = session.totalRounds * session.totalBalls;
+                    const greenPercent = totalShots > 0 ? (session.totals.green / totalShots) * 100 : 0;
+                    // Format date for label
+                    const dateObj = new Date(session.date + 'T00:00:00');
+                    const formatted = dateObj.toLocaleDateString('pt-BR', {
+                        day: '2-digit', month: '2-digit'
+                    });
+                    labels.push(formatted);
+                    greenPercents.push(parseFloat(greenPercent.toFixed(2)));
+
+                    // Aggregate for overall metrics
+                    totalGreenShots += session.totals.green;
+                    totalShotsAll += totalShots;
+                    totalPuttsMadeAll += session.totals.puttsMade;
+                    totalPuttsAll += session.totals.puttsMade + session.totals.puttsMissed;
+
+                    // Aggregate stats per club
+                    const club = session.club;
+                    if (!clubStats[club]) {
+                        clubStats[club] = { sum: 0, count: 0 };
+                    }
+                    clubStats[club].sum += greenPercent;
+                    clubStats[club].count += 1;
+                });
+
+                // Calculate overall metrics
+                const avgGreen = greenPercents.reduce((a, b) => a + b, 0) / greenPercents.length;
+                const stdDevGreen = Math.sqrt(greenPercents.reduce((sum, v) => sum + Math.pow(v - avgGreen, 2), 0) / greenPercents.length);
+                const bestGreen = Math.max(...greenPercents);
+                const puttingEfficiency = totalPuttsAll > 0 ? (totalPuttsMadeAll / totalPuttsAll) * 100 : 0;
+                // Moving average of last 5 sessions (or fewer if less sessions)
+                const windowSize = 5;
+                let movingAvg = 0;
+                if (greenPercents.length > 0) {
+                    const start = Math.max(0, greenPercents.length - windowSize);
+                    const subset = greenPercents.slice(start);
+                    movingAvg = subset.reduce((a, b) => a + b, 0) / subset.length;
+                }
+
+                // Insert metrics into DOM
+                metricsDiv.innerHTML = `
+                    <div class="metric"><strong>Taxa média de acerto no green (GIR):</strong> ${avgGreen.toFixed(1)}% (desvio padrão ${stdDevGreen.toFixed(1)}%, melhor marca ${bestGreen.toFixed(1)}%)</div>
+                    <div class="metric"><strong>Eficiência de putting:</strong> ${puttingEfficiency.toFixed(1)}% (putts convertidos vs tentados)</div>
+                    <div class="metric"><strong>Média móvel (últimos ${Math.min(windowSize, greenPercents.length)} treinos):</strong> ${movingAvg.toFixed(1)}%</div>
+                `;
+
+                // Prepare bar chart data
+                const barLabels = Object.keys(clubStats);
+                const barData = barLabels.map(club => {
+                    const stat = clubStats[club];
+                    return parseFloat((stat.sum / stat.count).toFixed(2));
+                });
+
+                // Create line chart (Green % over time)
+                const ctxLine = document.getElementById('lineChart').getContext('2d');
+                lineChart = new Chart(ctxLine, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Green % por sessão',
+                            data: greenPercents,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102,126,234,0.2)',
+                            fill: true,
+                            lineTension: 0.2,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    fontColor: '#495057'
+                                },
+                                gridLines: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            }],
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    fontColor: '#495057',
+                                    callback: function(value) { return value + '%'; }
+                                },
+                                gridLines: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            }]
+                        }
+                    }
+                });
+
+                // Create bar chart (Average Green % per club)
+                const ctxBar = document.getElementById('barChart').getContext('2d');
+                barChart = new Chart(ctxBar, {
+                    type: 'bar',
+                    data: {
+                        labels: barLabels,
+                        datasets: [{
+                            label: 'Média % no green por taco',
+                            data: barData,
+                            backgroundColor: '#56ab2f',
+                            borderColor: '#56ab2f',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        legend: { display: false },
+                        scales: {
+                            xAxes: [{
+                                ticks: {
+                                    fontColor: '#495057'
+                                },
+                                gridLines: {
+                                    display: false
+                                }
+                            }],
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true,
+                                    max: 100,
+                                    fontColor: '#495057',
+                                    callback: function(value) { return value + '%'; }
+                                },
+                                gridLines: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                }
+                            }]
+                        }
+                    }
+                });
+
+                // Build history list (reverse chronological order for display)
+                list.innerHTML = sessions.slice().reverse().map(session => {
                     const totalShots = session.totalRounds * session.totalBalls;
                     const greenPercent = ((session.totals.green / totalShots) * 100).toFixed(1);
                     const totalPutts = session.totals.puttsMade + session.totals.puttsMissed;
