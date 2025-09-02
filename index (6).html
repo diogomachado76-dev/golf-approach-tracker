@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Training Tracker Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        /* History metrics and charts styling */
+        .history-metrics {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-metrics .metric {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .history-charts {
+            margin-bottom: 20px;
+        }
+
+        .history-charts canvas {
+            width: 100% !important;
+            max-width: 640px;
+            height: 260px !important;
+            margin-bottom: 20px;
+        }
+
+        .history-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .history-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .config-section {
+            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .config-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .config-item {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .config-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+
+        .config-item input, .config-item select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .config-item input:focus, .config-item select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .tracking-section {
+            padding: 25px;
+            display: none;
+        }
+
+        .tracking-section.active {
+            display: block;
+        }
+
+        .round-indicator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .shot-counter {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .shot-counter h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .shot-counter .number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .shot-counter .total {
+            color: #6c757d;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .shot-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .shot-btn {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .shot-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .shot-btn.green {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(86, 171, 47, 0.3);
+        }
+
+        .shot-btn.miss {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .shot-btn.hole {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(250, 112, 154, 0.3);
+        }
+
+        .shot-btn .icon {
+            font-size: 32px;
+        }
+
+        .shot-btn .count {
+            font-size: 24px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .putting-section {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .putting-section.active {
+            display: block;
+        }
+
+        .putting-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .putting-header h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .putting-counter {
+            font-size: 24px;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+
+        .putting-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .putt-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .putt-btn.made {
+            background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+            color: white;
+        }
+
+        .putt-btn.missed {
+            background: linear-gradient(135deg, #ef5350 0%, #e57373 100%);
+            color: white;
+        }
+
+        /* Overlay for direction selection */
+        .direction-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        .direction-overlay.active {
+            display: flex;
+        }
+
+        .direction-dialog {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 300px;
+        }
+
+        .direction-dialog h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #495057;
+        }
+
+        .direction-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .direction-buttons button {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #f8f9fa;
+            transition: background 0.3s;
+        }
+
+        .direction-buttons button:hover {
+            background: #e0e7ff;
+        }
+
+        .shot-history {
+            margin-bottom: 25px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .shot-history h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .shot-item {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 3px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .shot-item.green {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .shot-item.miss {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .shot-item.hole {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .shot-item.putt-made {
+            background: #c8e6c9;
+            color: #1b5e20;
+        }
+
+        .shot-item.putt-missed {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #495057;
+        }
+
+        .action-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .action-btn.next {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .results-section {
+            padding: 25px;
+            display: none;
+            background: #f8f9fa;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-section h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #495057;
+        }
+
+        .round-summary {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .round-summary h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item .label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .summary-item .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .history-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .history-modal.active {
+            display: block;
+        }
+
+        .history-content {
+            background: white;
+            max-width: 700px;
+            margin: 20px auto;
+            border-radius: 20px;
+            padding: 25px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .close-history {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .history-date {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .history-stat {
+            color: #6c757d;
+        }
+
+        .history-stat span {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .clear-history {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        @media (max-width: 480px) {
+            .shot-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-group {
+                flex-direction: column;
+            }
+            
+            .config-item {
+                min-width: 100%;
+            }
+
+            .putting-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⛳ Golf Training Tracker Pro</h1>
+            <p>Sistema completo de treino com approach e putting</p>
+            <div class="history-icon" onclick="showHistory()" title="Ver Histórico">
+                📊
+            </div>
+        </div>
+
+        <div class="config-section" id="configSection">
+            <div class="config-group">
+                <div class="config-item">
+                    <label for="sessionDate">Data do Treino</label>
+                    <input type="date" id="sessionDate" value="">
+                </div>
+                <div class="config-item">
+                    <label for="totalRounds">Número de Rodadas</label>
+                    <input type="number" id="totalRounds" min="1" max="20" value="3">
+                </div>
+            </div>
+            <div class="config-group">
+                <div class="config-item">
+                    <label for="totalBalls">Bolas por Rodada</label>
+                    <input type="number" id="totalBalls" min="1" max="100" value="10">
+                </div>
+                <div class="config-item">
+                    <label for="distance">Distância (jardas)</label>
+                    <input type="number" id="distance" min="1" max="200" value="26">
+                </div>
+            </div>
+            <div class="config-item">
+                <label for="clubType">Taco</label>
+                <select id="clubType">
+                    <option value="PW">Pitching Wedge (PW)</option>
+                    <option value="SW">Sand Wedge (SW)</option>
+                    <option value="LW">Lob Wedge (LW)</option>
+                    <!-- A lob wedge typically has a loft around 58‑60°, but some players
+                         use a specific 60° wedge. Include an explicit option for it so
+                         golfers can choose it directly. -->
+                    <option value="60">Wedge 60°</option>
+                    <option value="GW">Gap Wedge (GW)</option>
+                    <option value="9">Ferro 9</option>
+                    <option value="8">Ferro 8</option>
+                    <option value="7">Ferro 7</option>
+                    <option value="outro">Outro</option>
+                </select>
+            </div>
+            <button class="start-btn" onclick="startSession()">Iniciar Treino</button>
+        </div>
+
+        <div class="tracking-section" id="trackingSection">
+            <div class="round-indicator" id="roundIndicator">
+                Rodada 1 de 3
+            </div>
+
+            <div class="shot-counter">
+                <h3>Tacada de Approach</h3>
+                <div class="number" id="currentShot">1</div>
+                <div class="total">de <span id="totalShots">10</span> bolas</div>
+            </div>
+
+            <div class="shot-buttons" id="approachButtons">
+                <button class="shot-btn green" onclick="recordShot('green')">
+                    <div class="icon">🟢</div>
+                    <div>No Green</div>
+                    <div class="count" id="greenCount">0</div>
+                </button>
+                <button class="shot-btn miss" onclick="recordShot('miss')">
+                    <div class="icon">❌</div>
+                    <div>Fora do Green</div>
+                    <div class="count" id="missCount">0</div>
+                </button>
+                <button class="shot-btn hole" onclick="recordShot('hole')">
+                    <div class="icon">⛳</div>
+                    <div>No Buraco!</div>
+                    <div class="count" id="holeCount">0</div>
+                </button>
+            </div>
+
+            <div class="putting-section" id="puttingSection">
+                <div class="putting-header">
+                    <h3>🏌️ Fase de Putting</h3>
+                    <div class="putting-counter">
+                        Putt <span id="currentPutt">1</span> de <span id="totalPutts">0</span>
+                    </div>
+                </div>
+                <div class="putting-buttons">
+                    <button class="putt-btn made" onclick="recordPutt(true)">
+                        ✅ Acertou
+                    </button>
+                    <button class="putt-btn missed" onclick="recordPutt(false)">
+                        ❌ Errou
+                    </button>
+                </div>
+            </div>
+
+            <div class="shot-history">
+                <h4>Histórico da Rodada</h4>
+                <div id="historyList"></div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn" onclick="undoLastAction()">↩️ Desfazer</button>
+                <button class="action-btn next" id="nextRoundBtn" onclick="handleNextAction()">Próxima Fase</button>
+            </div>
+        </div>
+
+        <div class="results-section" id="resultsSection">
+            <h2>📊 Resultados do Treino</h2>
+            
+            <div id="roundsSummary"></div>
+
+            <button class="start-btn" onclick="newSession()">Novo Treino</button>
+        </div>
+    </div>
+
+    <!-- Overlay for selecting direction of miss -->
+    <div id="directionOverlay" class="direction-overlay" onclick="if(event.target.id==='directionOverlay') finalizeMissShot(null)">
+        <div class="direction-dialog">
+            <h3>Para onde a bola foi?</h3>
+            <div class="direction-buttons">
+                <button onclick="finalizeMissShot('left')">⬅️ Esquerda</button>
+                <button onclick="finalizeMissShot('right')">➡️ Direita</button>
+                <button onclick="finalizeMissShot('short')">⬇️ Curto</button>
+                <button onclick="finalizeMissShot('long')">⬆️ Longo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico -->
+    <div class="history-modal" id="historyModal">
+        <div class="history-content">
+            <div class="history-header">
+                <h2>📅 Histórico de Treinos</h2>
+                <button class="close-history" onclick="closeHistory()">Fechar</button>
+            </div>
+            <!-- Metrics and charts for history -->
+            <div class="history-metrics" id="historyMetrics"></div>
+            <div class="history-charts" id="historyCharts">
+                <canvas id="lineChart"></canvas>
+                <canvas id="barChart"></canvas>
+            </div>
+
+            <div class="history-list" id="historyListModal"></div>
+            <button class="clear-history" onclick="clearHistory()">🗑️ Limpar Histórico</button>
+        </div>
+    </div>
+
+    <!-- Removed Chart.js because we no longer render charts in this simplified version -->
+    <script>
+        /**
+         * Global session object.  Keeps track of the current training session
+         * including configuration (date, rounds, balls, distance, club), the
+         * current round, and a list of completed rounds.  Each round has a
+         * counts object for aggregate counts (green, miss, hole, putts made,
+         * putts missed) as well as a directionalCounts object for misses
+         * classified by direction (left, right, short, long).
+         */
+        let session = {
+            date: '',
+            totalRounds: 3,
+            totalBalls: 10,
+            distance: 26,
+            club: 'PW',
+            currentRound: 1,
+            rounds: [],
+            currentRoundData: null,
+            phase: 'approach' // 'approach' or 'putting'
+        };
+
+        // Set today's date by default
+        document.getElementById('sessionDate').valueAsDate = new Date();
+
+        // We no longer use Chart.js so remove chart instances
+        let lineChart;
+        let barChart;
+
+        function startSession() {
+            const date = document.getElementById('sessionDate').value;
+            const totalRounds = parseInt(document.getElementById('totalRounds').value);
+            const totalBalls = parseInt(document.getElementById('totalBalls').value);
+            const distance = parseInt(document.getElementById('distance').value);
+            const club = document.getElementById('clubType').value;
+
+            if (!date || totalRounds < 1 || totalBalls < 1 || distance < 1) {
+                alert('Por favor, preencha todos os campos corretamente.');
+                return;
+            }
+
+            session = {
+                date: date,
+                totalRounds: totalRounds,
+                totalBalls: totalBalls,
+                distance: distance,
+                club: club,
+                currentRound: 1,
+                rounds: [],
+                phase: 'approach'
+            };
+
+            startNewRound();
+
+            // Update UI
+            document.getElementById('configSection').style.display = 'none';
+            document.getElementById('trackingSection').classList.add('active');
+            document.getElementById('resultsSection').classList.remove('active');
+        }
+
+        function startNewRound() {
+            session.currentRoundData = {
+                roundNumber: session.currentRound,
+                shots: [],
+                putts: [],
+                currentShot: 1,
+                currentPutt: 1,
+                counts: {
+                    green: 0,
+                    miss: 0,
+                    hole: 0,
+                    puttsMade: 0,
+                    puttsMissed: 0
+                },
+                // Track directional misses separately
+                directionalCounts: {
+                    left: 0,
+                    right: 0,
+                    short: 0,
+                    long: 0
+                }
+            };
+
+            session.phase = 'approach';
+
+            // Update UI
+            document.getElementById('roundIndicator').textContent = 
+                `Rodada ${session.currentRound} de ${session.totalRounds}`;
+            document.getElementById('totalShots').textContent = session.totalBalls;
+            document.getElementById('currentShot').textContent = 1;
+            
+            // Reset counters
+            document.getElementById('greenCount').textContent = '0';
+            document.getElementById('missCount').textContent = '0';
+            document.getElementById('holeCount').textContent = '0';
+            document.getElementById('historyList').innerHTML = '';
+
+            // Hide putting section
+            document.getElementById('puttingSection').classList.remove('active');
+            document.getElementById('approachButtons').style.display = 'grid';
+            
+            updateNextButton();
+        }
+
+        function recordShot(type) {
+            // If all shots have been taken, skip to putting phase
+            if (session.currentRoundData.currentShot > session.totalBalls) {
+                startPuttingPhase();
+                return;
+            }
+
+            // If this is a miss without specified direction, show overlay
+            if (type === 'miss' && arguments.length < 2) {
+                // store the pending shot number
+                pendingMissShot = session.currentRoundData.currentShot;
+                // show overlay to choose direction
+                showDirectionOverlay();
+                return;
+            }
+
+            // Determine direction if provided
+            const direction = arguments.length >= 2 ? arguments[1] : null;
+
+            // Record the shot
+            session.currentRoundData.shots.push({
+                number: session.currentRoundData.currentShot,
+                type: type,
+                direction: direction
+            });
+
+            // Update counts
+            session.currentRoundData.counts[type]++;
+            if (type === 'miss' && direction) {
+                session.currentRoundData.directionalCounts[direction]++;
+            }
+
+            // Update UI counters
+            document.getElementById(type + 'Count').textContent = session.currentRoundData.counts[type];
+
+            // Add to history display
+            let historyText = `#${session.currentRoundData.currentShot} ${getTypeText(type)}`;
+            if (type === 'miss' && direction) {
+                historyText += ` (${getDirectionText(direction)})`;
+            }
+            addToHistory(historyText, type);
+
+            // Increment shot number
+            session.currentRoundData.currentShot++;
+
+            if (session.currentRoundData.currentShot > session.totalBalls) {
+                setTimeout(startPuttingPhase, 500);
+            } else {
+                document.getElementById('currentShot').textContent = session.currentRoundData.currentShot;
+            }
+        }
+
+        // Pending shot number when waiting for direction selection
+        let pendingMissShot = null;
+
+        /**
+         * Display overlay for selecting the direction of a miss (Esq/Dir/Curto/Longo).
+         * The overlay is a simple modal with four buttons.  When the user selects
+         * a direction, finalizeMissShot() will be called with the chosen
+         * direction.
+         */
+        function showDirectionOverlay() {
+            const overlay = document.getElementById('directionOverlay');
+            overlay.classList.add('active');
+        }
+
+        /**
+         * Finalize a miss shot once the direction has been selected.
+         * @param {string} direction - one of 'left', 'right', 'short', 'long'
+         */
+        function finalizeMissShot(direction) {
+            const overlay = document.getElementById('directionOverlay');
+            overlay.classList.remove('active');
+            // If cancelled (no direction) or no pending shot, do nothing
+            if (direction == null || pendingMissShot === null) {
+                pendingMissShot = null;
+                return;
+            }
+            // Record the shot with the chosen direction
+            recordShot('miss', direction);
+            pendingMissShot = null;
+        }
+
+        function startPuttingPhase() {
+            const greensHit = session.currentRoundData.counts.green;
+            
+            if (greensHit === 0) {
+                // No putts to take, finish round
+                finishRound();
+                return;
+            }
+
+            session.phase = 'putting';
+            session.currentRoundData.totalPutts = greensHit;
+            session.currentRoundData.currentPutt = 1;
+
+            // Update UI
+            document.getElementById('approachButtons').style.display = 'none';
+            document.getElementById('puttingSection').classList.add('active');
+            document.getElementById('currentPutt').textContent = 1;
+            document.getElementById('totalPutts').textContent = greensHit;
+            
+            updateNextButton();
+        }
+
+        function recordPutt(made) {
+            if (session.currentRoundData.currentPutt > session.currentRoundData.totalPutts) {
+                finishRound();
+                return;
+            }
+
+            session.currentRoundData.putts.push({
+                number: session.currentRoundData.currentPutt,
+                made: made
+            });
+
+            if (made) {
+                session.currentRoundData.counts.puttsMade++;
+            } else {
+                session.currentRoundData.counts.puttsMissed++;
+            }
+
+            // Add to history
+            const puttText = `Putt #${session.currentRoundData.currentPutt} ${made ? 'Acertou' : 'Errou'}`;
+            addToHistory(puttText, made ? 'putt-made' : 'putt-missed');
+
+            session.currentRoundData.currentPutt++;
+
+            if (session.currentRoundData.currentPutt > session.currentRoundData.totalPutts) {
+                setTimeout(finishRound, 500);
+            } else {
+                document.getElementById('currentPutt').textContent = session.currentRoundData.currentPutt;
+            }
+        }
+
+        function finishRound() {
+            // Save current round
+            session.rounds.push({...session.currentRoundData});
+
+            if (session.currentRound < session.totalRounds) {
+                // More rounds to go
+                session.currentRound++;
+                startNewRound();
+            } else {
+                // All rounds complete
+                showResults();
+            }
+        }
+
+        function undoLastAction() {
+            if (session.phase === 'putting') {
+                if (session.currentRoundData.putts.length === 0) return;
+
+                const lastPutt = session.currentRoundData.putts.pop();
+                if (lastPutt.made) {
+                    session.currentRoundData.counts.puttsMade--;
+                } else {
+                    session.currentRoundData.counts.puttsMissed--;
+                }
+                session.currentRoundData.currentPutt--;
+                document.getElementById('currentPutt').textContent = session.currentRoundData.currentPutt;
+            } else {
+                if (session.currentRoundData.shots.length === 0) return;
+
+                const lastShot = session.currentRoundData.shots.pop();
+                session.currentRoundData.counts[lastShot.type]--;
+                session.currentRoundData.currentShot--;
+
+                // If it was a miss, decrement directional count as well
+                if (lastShot.type === 'miss' && lastShot.direction) {
+                    session.currentRoundData.directionalCounts[lastShot.direction]--;
+                }
+
+                document.getElementById(lastShot.type + 'Count').textContent = 
+                    session.currentRoundData.counts[lastShot.type];
+                document.getElementById('currentShot').textContent = session.currentRoundData.currentShot;
+            }
+
+            // Remove from history
+            const historyList = document.getElementById('historyList');
+            if (historyList.lastChild) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        function handleNextAction() {
+            if (session.phase === 'approach') {
+                startPuttingPhase();
+            } else {
+                finishRound();
+            }
+        }
+
+        function updateNextButton() {
+            const btn = document.getElementById('nextRoundBtn');
+            if (session.phase === 'approach') {
+                btn.textContent = 'Ir para Putting';
+            } else if (session.currentRound < session.totalRounds) {
+                btn.textContent = 'Próxima Rodada';
+            } else {
+                btn.textContent = 'Finalizar Treino';
+            }
+        }
+
+        function showResults() {
+            // Build summary for each round played
+            const summaries = session.rounds
+                .filter(round => round.shots && round.shots.length > 0)
+                .map(round => {
+                    const totalShots = round.shots.length;
+                    // Miss% = (misses / total shots) * 100
+                    const missPercent = totalShots > 0 ? ((round.counts.miss / totalShots) * 100).toFixed(1) : 0;
+                    // Build breakdown only if there were misses
+                    let breakdownHTML = '';
+                    if (round.counts.miss > 0) {
+                        const { left, right, short, long } = round.directionalCounts;
+                        const totalMisses = round.counts.miss;
+                        const perc = key => ((round.directionalCounts[key] / totalMisses) * 100).toFixed(1);
+                        breakdownHTML = `
+                            <div class="summary-item">
+                                <div class="label">Miss% (dos erros)</div>
+                                <div class="value" style="color: #f5576c;">
+                                    Esq: ${perc('left')}%, Dir: ${perc('right')}%, Curto: ${perc('short')}%, Longo: ${perc('long')}%
+                                </div>
+                            </div>
+                        `;
+                    }
+                    // Putting % remains from green putts
+                    const puttPercent = round.counts.green > 0 ? 
+                        ((round.counts.puttsMade / round.counts.green) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="round-summary">
+                            <h3>Rodada ${round.roundNumber}</h3>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <div class="label">No Green</div>
+                                    <div class="value" style="color: #56ab2f;">${round.counts.green}</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="label">Fora</div>
+                                    <div class="value" style="color: #f5576c;">${round.counts.miss}</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="label">No Buraco</div>
+                                    <div class="value" style="color: #fa709a;">${round.counts.hole}</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="label">Miss%</div>
+                                    <div class="value" style="color: #f5576c;">${missPercent}%</div>
+                                </div>
+                                ${breakdownHTML}
+                                <div class="summary-item">
+                                    <div class="label">Putts Acertados</div>
+                                    <div class="value" style="color: #43a047;">${round.counts.puttsMade}</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="label">Putting %</div>
+                                    <div class="value" style="color: #2e7d32;">${puttPercent}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            document.getElementById('roundsSummary').innerHTML = summaries.join('');
+
+            // Show results section
+            document.getElementById('trackingSection').classList.remove('active');
+            document.getElementById('resultsSection').classList.add('active');
+
+            // Save session to local storage
+            saveSession();
+        }
+
+        function addToHistory(text, type) {
+            const historyItem = document.createElement('span');
+            historyItem.className = `shot-item ${type}`;
+            historyItem.textContent = text;
+            document.getElementById('historyList').appendChild(historyItem);
+        }
+
+        function getTypeText(type) {
+            switch(type) {
+                case 'green': return 'Green';
+                case 'miss': return 'Fora';
+                case 'hole': return 'Buraco!';
+                default: return type;
+            }
+        }
+
+        /**
+         * Convert a direction key to a human-readable text for UI.
+         * @param {string} direction - one of 'left', 'right', 'short', 'long'
+         * @returns {string}
+         */
+        function getDirectionText(direction) {
+            switch(direction) {
+                case 'left': return 'Esquerda';
+                case 'right': return 'Direita';
+                case 'short': return 'Curto';
+                case 'long': return 'Longo';
+                default: return direction;
+            }
+        }
+
+        function newSession() {
+            document.getElementById('configSection').style.display = 'block';
+            document.getElementById('trackingSection').classList.remove('active');
+            document.getElementById('resultsSection').classList.remove('active');
+            document.getElementById('sessionDate').valueAsDate = new Date();
+        }
+
+        function saveSession() {
+            const sessions = JSON.parse(localStorage.getItem('golfSessions') || '[]');
+            
+            // Calculate totals
+            let totalGreen = 0, totalMiss = 0, totalHole = 0;
+            let totalPuttsMade = 0, totalPuttsMissed = 0;
+            
+            session.rounds.forEach(round => {
+                totalGreen += round.counts.green;
+                totalMiss += round.counts.miss;
+                totalHole += round.counts.hole;
+                totalPuttsMade += round.counts.puttsMade;
+                totalPuttsMissed += round.counts.puttsMissed;
+            });
+
+            // Aggregate directional counts across rounds
+            const totalDirectional = { left: 0, right: 0, short: 0, long: 0 };
+            session.rounds.forEach(r => {
+                // Add up per-direction counts
+                Object.keys(totalDirectional).forEach(key => {
+                    totalDirectional[key] += r.directionalCounts[key] || 0;
+                });
+            });
+
+            const sessionData = {
+                date: session.date,
+                timestamp: new Date().toISOString(),
+                distance: session.distance,
+                club: session.club,
+                totalRounds: session.totalRounds,
+                totalBalls: session.totalBalls,
+                totals: {
+                    green: totalGreen,
+                    miss: totalMiss,
+                    hole: totalHole,
+                    puttsMade: totalPuttsMade,
+                    puttsMissed: totalPuttsMissed,
+                    directional: totalDirectional
+                },
+                rounds: session.rounds
+            };
+
+            sessions.push(sessionData);
+            localStorage.setItem('golfSessions', JSON.stringify(sessions));
+        }
+
+        function showHistory() {
+            const sessions = JSON.parse(localStorage.getItem('golfSessions') || '[]');
+            const modal = document.getElementById('historyModal');
+            const list = document.getElementById('historyListModal');
+            const metricsDiv = document.getElementById('historyMetrics');
+
+            // Reset metrics content
+            metricsDiv.innerHTML = '';
+
+            // We no longer render charts; hide canvases if present
+            document.getElementById('lineChart').style.display = 'none';
+            document.getElementById('barChart').style.display = 'none';
+
+            if (sessions.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #6c757d;">Nenhum treino registrado ainda.</p>';
+            } else {
+                // Sort sessions chronologically for aggregated stats
+                const sessionsSorted = sessions.slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                // Aggregate overall miss statistics
+                let totalMisses = 0;
+                let totalShotsAll = 0;
+                const directionTotals = { left: 0, right: 0, short: 0, long: 0 };
+                const missByClubDist = {};
+
+                sessionsSorted.forEach(sess => {
+                    const totalShots = sess.totalRounds * sess.totalBalls;
+                    totalShotsAll += totalShots;
+                    totalMisses += sess.totals.miss;
+                    // accumulate directional totals
+                    const dir = sess.totals.directional || { left: 0, right: 0, short: 0, long: 0 };
+                    ['left','right','short','long'].forEach(k => {
+                        directionTotals[k] += dir[k] || 0;
+                    });
+                    // aggregate miss % by club and distance
+                    const key = sess.club + ' - ' + sess.distance + 'j';
+                    const missPercent = totalShots > 0 ? (sess.totals.miss / totalShots) * 100 : 0;
+                    if (!missByClubDist[key]) {
+                        missByClubDist[key] = { sum: 0, count: 0 };
+                    }
+                    missByClubDist[key].sum += missPercent;
+                    missByClubDist[key].count += 1;
+                });
+
+                const missPercentOverall = totalShotsAll > 0 ? (totalMisses / totalShotsAll) * 100 : 0;
+                // Determine distribution of misses by direction
+                const totalDirections = directionTotals.left + directionTotals.right + directionTotals.short + directionTotals.long;
+                let distributionText = '';
+                if (totalDirections > 0) {
+                    const perc = k => ((directionTotals[k] / totalDirections) * 100).toFixed(1);
+                    distributionText = `Esq: ${perc('left')}%, Dir: ${perc('right')}%, Curto: ${perc('short')}%, Longo: ${perc('long')}%`;
+                } else {
+                    distributionText = 'Sem erros registrados';
+                }
+
+                // Prepare miss % per club-distance list
+                const clubDistEntries = Object.entries(missByClubDist).map(([key, val]) => {
+                    const avg = val.sum / val.count;
+                    return { key, avg: avg };
+                }).sort((a, b) => a.avg - b.avg); // sort ascending by miss %
+
+                // Insert explanatory text and metrics into DOM
+                metricsDiv.innerHTML = `
+                    <p style="font-size: 14px; margin-bottom: 10px; color: #495057;">
+                        <strong>Como ler estas métricas</strong><br>
+                        <em>Miss% (Fora do green)</em>: porcentagem de tacadas de approach que não ficaram no green. Ex.: se 5 de 10 saem do green, Miss% = 50%.
+                        <br><em>Quebra de Misses (Esq/Dir/Curto/Longo)</em>: distribuição dentro dos erros (somente bolas fora do green). Por exemplo, Curto 40%, Esquerda 40%, Direita 20%.
+                        <br><em>Miss% por Taco × Distância</em>: média do Miss% em cada combinação de taco e distância (ex.: 60° - 30j). Útil para planejar treinos específicos.
+                    </p>
+                    <div class="metric"><strong>Miss% geral:</strong> ${missPercentOverall.toFixed(1)}%</div>
+                    <div class="metric"><strong>Distribuição dos erros:</strong> ${distributionText}</div>
+                `;
+
+                // Build list of club-distance miss percentages
+                if (clubDistEntries.length > 0) {
+                    metricsDiv.innerHTML += '<div class="metric" style="margin-top:10px;"><strong>Miss% médio por Taco × Distância:</strong><br>';
+                    clubDistEntries.forEach(item => {
+                        metricsDiv.innerHTML += `<span style="display:block; font-size:14px; margin-left:10px;">${item.key}: ${item.avg.toFixed(1)}%</span>`;
+                    });
+                    metricsDiv.innerHTML += '</div>';
+                }
+
+                // Build history list (reverse chronological)
+                list.innerHTML = sessions.slice().reverse().map(sess => {
+                    const totalShots = sess.totalRounds * sess.totalBalls;
+                    const missPercent = totalShots > 0 ? (sess.totals.miss / totalShots * 100).toFixed(1) : '0.0';
+                    // Determine top direction of errors if any
+                    const dirTot = sess.totals.directional || { left:0,right:0,short:0,long:0 };
+                    let topDir = '';
+                    let maxCount = 0;
+                    Object.keys(dirTot).forEach(key => {
+                        if (dirTot[key] > maxCount) {
+                            maxCount = dirTot[key];
+                            topDir = key;
+                        }
+                    });
+                    const topDirText = maxCount > 0 ? getDirectionText(topDir) + ' (' + maxCount + ')' : 'n/a';
+                    // format date
+                    const date = new Date(sess.date + 'T00:00:00');
+                    const formattedDate = date.toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    });
+                    const totalPutts = sess.totals.puttsMade + sess.totals.puttsMissed;
+                    const puttPercent = totalPutts > 0 ? ((sess.totals.puttsMade / totalPutts) * 100).toFixed(1) : '0.0';
+                    return `
+                        <div class="history-item">
+                            <div class="history-date">📅 ${formattedDate} - ${sess.distance} jardas - ${sess.club}</div>
+                            <div class="history-stats">
+                                <div class="history-stat">Rodadas: <span>${sess.totalRounds}</span></div>
+                                <div class="history-stat">Bolas/Rodada: <span>${sess.totalBalls}</span></div>
+                                <div class="history-stat">Miss%: <span>${missPercent}%</span></div>
+                                <div class="history-stat">Erros mais comuns: <span>${topDirText}</span></div>
+                                <div class="history-stat">Putts: <span>${sess.totals.puttsMade}/${totalPutts} (${puttPercent}%)</span></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        function clearHistory() {
+            if (confirm('Tem certeza que deseja limpar todo o histórico? Esta ação não pode ser desfeita.')) {
+                localStorage.removeItem('golfSessions');
+                closeHistory();
+                alert('Histórico limpo com sucesso!');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('historyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeHistory();
+            }
+        });
+    </script>
+</body>
+</html>
