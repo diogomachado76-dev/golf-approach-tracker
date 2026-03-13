@@ -1,107 +1,107 @@
 # CLAUDE.md
 
-## Project Overview
+## Visão Geral do Projeto
 
-**Golf Training Tracker Pro** is a single-page web application for tracking golf approach shot practice sessions. It allows golfers to record approach shots (green hit, miss, hole-in), transition to a putting phase, and review session results with historical statistics and charts. The UI is in **Brazilian Portuguese (pt-BR)**.
+**Golf Training Tracker Pro** é um aplicativo web de página única para acompanhar sessões de treino de approach no golfe. O jogador registra tacadas de approach (acertou o green, errou, acertou o buraco), faz a fase de putting, e depois visualiza os resultados da sessão com estatísticas e gráficos históricos. Toda a interface é em **português brasileiro**.
 
-## Repository Structure
+## Estrutura do Repositório
 
 ```
 golf-approach-tracker/
-├── index.html          # Main application (HTML + CSS + JS, ~1260 lines)
-├── index (5).html      # Older version / backup (uploaded via GitHub)
-├── index (6).html      # Older version / backup (uploaded via GitHub)
-└── CLAUDE.md           # This file
+├── index.html          # Aplicação principal (HTML + CSS + JS, ~1260 linhas)
+├── index (5).html      # Versão antiga / backup (upload via GitHub)
+├── index (6).html      # Versão antiga / backup (upload via GitHub)
+└── CLAUDE.md           # Este arquivo
 ```
 
-This is a **zero-dependency, no-build** project. Everything lives in a single `index.html` file containing inline CSS and JavaScript. The only external dependency is **Chart.js v2** loaded via CDN (`<script>` tag).
+Este projeto **não tem dependências locais nem processo de build**. Tudo está em um único arquivo `index.html` com CSS e JavaScript inline. A única dependência externa é o **Chart.js v2**, carregado via CDN (tag `<script>`).
 
-## Architecture
+## Arquitetura
 
-### Single-File Application (`index.html`)
+### Aplicação em Arquivo Único (`index.html`)
 
-The app is structured in three inline sections within one HTML file:
+O app é organizado em três seções dentro de um único arquivo HTML:
 
-1. **`<style>`** — All CSS (~690 lines). Uses CSS gradients, flexbox/grid layouts, and responsive design. No preprocessor or framework.
-2. **HTML body** — Semantic sections for config, tracking, results, and history modal.
-3. **`<script>`** — All JavaScript (~560 lines). Plain vanilla JS, no framework.
+1. **`<style>`** — Todo o CSS (~690 linhas). Usa gradientes CSS, layouts com flexbox/grid e design responsivo. Sem pré-processador ou framework.
+2. **HTML body** — Seções semânticas para configuração, rastreamento, resultados e modal de histórico.
+3. **`<script>`** — Todo o JavaScript (~560 linhas). JS puro (vanilla), sem framework.
 
-### Application Flow
+### Fluxo da Aplicação
 
-1. **Configuration Phase** (`#configSection`) — User sets date, rounds, balls per round, distance (yards), and club type.
-2. **Approach Tracking Phase** (`#trackingSection`) — User records each shot as:
-   - `green` — Ball landed on the green
-   - `miss` — Ball missed the green
-   - `hole` — Ball went in the hole
-3. **Putting Phase** (`#puttingSection`) — For each green hit, user records putt made/missed.
-4. **Results Phase** (`#resultsSection`) — Per-round summary with green %, putting %.
-5. **History Modal** (`#historyModal`) — Aggregated stats, line chart (green % over time), bar chart (avg green % per club).
+1. **Fase de Configuração** (`#configSection`) — O usuário define data, número de rodadas, bolas por rodada, distância (jardas) e tipo de taco.
+2. **Fase de Approach** (`#trackingSection`) — O usuário registra cada tacada como:
+   - `green` — Bola caiu no green
+   - `miss` — Bola errou o green
+   - `hole` — Bola entrou no buraco
+3. **Fase de Putting** (`#puttingSection`) — Para cada green acertado, o usuário registra se o putt foi convertido ou errado.
+4. **Fase de Resultados** (`#resultsSection`) — Resumo por rodada com % de green e % de putting.
+5. **Modal de Histórico** (`#historyModal`) — Estatísticas agregadas, gráfico de linha (% green ao longo do tempo) e gráfico de barras (média de % green por taco).
 
-### Key State Management
+### Gerenciamento de Estado
 
-- Global `session` object holds all runtime state (current round, shots, counts, phase).
-- `phase` property toggles between `'approach'` and `'putting'`.
+- O objeto global `session` armazena todo o estado em tempo de execução (rodada atual, tacadas, contadores, fase).
+- A propriedade `phase` alterna entre `'approach'` e `'putting'`.
 
-### Data Persistence
+### Persistência de Dados
 
-- **localStorage** key: `golfSessions` — JSON array of all saved session objects.
-- Each session stores: date, timestamp, distance, club, round counts, and detailed round data.
+- Chave no **localStorage**: `golfSessions` — Array JSON com todos os objetos de sessão salvos.
+- Cada sessão armazena: data, timestamp, distância, taco, contadores por rodada e dados detalhados das rodadas.
 
-### External Dependencies
+### Dependências Externas
 
-- **Chart.js v2** via CDN (`https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js`) — Used for line and bar charts in the history modal.
+- **Chart.js v2** via CDN (`https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js`) — Usado para gráficos de linha e barras no modal de histórico.
 
-## Key Functions Reference
+## Referência das Funções Principais
 
-| Function | Purpose |
+| Função | Descrição |
 |---|---|
-| `startSession()` | Validates config inputs and initializes a new training session |
-| `startNewRound()` | Resets UI and state for a new round within a session |
-| `recordShot(type)` | Records an approach shot (`green`, `miss`, or `hole`) |
-| `startPuttingPhase()` | Transitions from approach to putting; skips if no greens hit |
-| `recordPutt(made)` | Records a putt result (boolean) |
-| `finishRound()` | Saves round data; advances to next round or shows results |
-| `undoLastAction()` | Undoes the last shot/putt recording |
-| `showResults()` | Renders per-round summary and triggers `saveSession()` |
-| `saveSession()` | Persists session data to localStorage |
-| `showHistory()` | Opens history modal with stats, charts, and session list |
-| `clearHistory()` | Clears all saved sessions from localStorage (with confirmation) |
+| `startSession()` | Valida os campos de configuração e inicializa uma nova sessão de treino |
+| `startNewRound()` | Reseta a interface e o estado para uma nova rodada dentro da sessão |
+| `recordShot(type)` | Registra uma tacada de approach (`green`, `miss` ou `hole`) |
+| `startPuttingPhase()` | Faz a transição do approach para o putting; pula se nenhum green foi acertado |
+| `recordPutt(made)` | Registra o resultado de um putt (booleano: acertou/errou) |
+| `finishRound()` | Salva os dados da rodada; avança para a próxima ou exibe resultados |
+| `undoLastAction()` | Desfaz o último registro de tacada ou putt |
+| `showResults()` | Exibe o resumo por rodada e aciona `saveSession()` |
+| `saveSession()` | Persiste os dados da sessão no localStorage |
+| `showHistory()` | Abre o modal de histórico com estatísticas, gráficos e lista de sessões |
+| `clearHistory()` | Limpa todas as sessões salvas do localStorage (com confirmação) |
 
-## Development Workflow
+## Fluxo de Desenvolvimento
 
-### Running Locally
+### Executando Localmente
 
-No build step required. Open `index.html` directly in a browser:
+Não é necessário nenhum passo de build. Basta abrir o `index.html` diretamente no navegador:
 
 ```bash
-# Using Python's built-in server:
+# Usando o servidor embutido do Python:
 python3 -m http.server 8000
 
-# Or simply open the file:
+# Ou simplesmente abrir o arquivo:
 open index.html        # macOS
 xdg-open index.html    # Linux
 ```
 
-### Testing
+### Testes
 
-There are no automated tests. All testing is manual via browser interaction.
+Não há testes automatizados. Todos os testes são feitos manualmente pelo navegador.
 
-### Making Changes
+### Fazendo Alterações
 
-- All code changes go in `index.html`. There is no module system or build pipeline.
-- CSS is at the top in a `<style>` block; JS is at the bottom in a `<script>` block.
-- The files `index (5).html` and `index (6).html` are older uploaded versions and should generally not be modified.
+- Todas as mudanças de código são feitas no `index.html`. Não existe sistema de módulos nem pipeline de build.
+- O CSS fica no topo dentro de um bloco `<style>`; o JS fica na parte inferior dentro de um bloco `<script>`.
+- Os arquivos `index (5).html` e `index (6).html` são versões antigas e em geral não devem ser modificados.
 
-## Conventions
+## Convenções
 
-- **Language**: UI text is in Brazilian Portuguese. Keep all user-facing strings in pt-BR.
-- **Styling**: Inline CSS using CSS custom gradients (`linear-gradient(135deg, #667eea, #764ba2)` as the primary theme). No CSS framework.
-- **JavaScript**: Vanilla JS only. No transpilation. DOM manipulation via `document.getElementById()`. No modules or imports.
-- **Data format**: All measurements in yards. Club types include wedge variants (PW, GW, SW, LW) and irons (9i through 5i).
-- **Chart.js**: Uses v2 API (legacy `xAxes`/`yAxes` syntax, not v3+). Keep chart code compatible with v2.
+- **Idioma**: Todo o texto da interface é em português brasileiro. Manter todas as strings voltadas ao usuário em pt-BR.
+- **Estilização**: CSS inline usando gradientes customizados (`linear-gradient(135deg, #667eea, #764ba2)` como tema principal). Sem framework CSS.
+- **JavaScript**: Apenas JS puro (vanilla). Sem transpilação. Manipulação do DOM via `document.getElementById()`. Sem módulos ou imports.
+- **Formato dos dados**: Todas as medidas em jardas. Tipos de taco incluem variantes de wedge (PW, GW, SW, LW) e ferros (9i até 5i).
+- **Chart.js**: Usa a API da v2 (sintaxe legada `xAxes`/`yAxes`, não v3+). Manter o código de gráficos compatível com a v2.
 
-## Common Pitfalls
+## Armadilhas Comuns
 
-- Chart instances (`lineChart`, `barChart`) must be destroyed before re-creating to avoid canvas reuse errors.
-- The `session` object is global and mutable — be careful with state when adding features.
-- `localStorage` has no migration system; schema changes to `golfSessions` may break existing user data.
+- As instâncias dos gráficos (`lineChart`, `barChart`) devem ser destruídas antes de recriá-las para evitar erros de reutilização do canvas.
+- O objeto `session` é global e mutável — tenha cuidado com o estado ao adicionar funcionalidades.
+- O `localStorage` não tem sistema de migração; mudanças no schema de `golfSessions` podem quebrar dados existentes do usuário.
